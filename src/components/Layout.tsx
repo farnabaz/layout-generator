@@ -1,13 +1,25 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import Column from './Column'
 
 interface ILayoutState {
     x: number;
     y: number;
-    columnStyle: {
+    style: {
         [key: string]: any;
     };
+}
+
+interface ILayoutProps {
+    grid: string[];
+    type?: 'fix' | 'grid' | 'float';
+    childAt?: (index: number, size: string) => JSX.Element | null;
+}
+
+interface ILayoutItem {
+    col: string,
+    key: number;
+    style: {};
 }
 
 const LayoutWrapper = styled.div`
@@ -56,7 +68,7 @@ function fixLayoutNextState(x: number, y: number, size: string): ILayoutState {
           return {
             x: nextX,
             y: nextY,
-            columnStyle: {
+            style: {
                 position: 'absolute',
                 width,
                 height,
@@ -92,7 +104,7 @@ function gridLayoutNextState(x: number, y: number, size: string): ILayoutState {
     return {
         x: nextX,
         y: nextY,
-        columnStyle: {
+        style: {
             gridColumn,
             gridRow,
         }
@@ -119,7 +131,7 @@ function floatLayoutNextState(x: number, y: number, size: string): ILayoutState 
     return {
         x,
         y,
-        columnStyle: {
+        style: {
             float: 'left',
             width,
             height,
@@ -127,27 +139,38 @@ function floatLayoutNextState(x: number, y: number, size: string): ILayoutState 
     }
 }
 
-export default function Layout({ grid, type }: { grid: string[], type?: 'fix' | 'grid' | 'float' }) {
-    let y = 0;
-    let x = 0;
-    let columnStyle = {}
-    let nextStep: (x: number, y: number, size: string) => ILayoutState;
-    switch (type) {
-        case 'fix': nextStep = fixLayoutNextState; break;
-        case 'grid': nextStep = gridLayoutNextState; break;
-        default: nextStep = floatLayoutNextState; break;
-    }
+export default function Layout({ grid, type, childAt = () => null }: ILayoutProps) {
+    const [layout, setlayout] = useState<ILayoutItem[]>([]);
+    useEffect(() => {
+        let y = 0;
+        let x = 0;
+        let style = {}
+        let nextStep: (x: number, y: number, size: string) => ILayoutState;
+        switch (type) {
+            case 'fix': nextStep = fixLayoutNextState; break;
+            case 'grid': nextStep = gridLayoutNextState; break;
+            default: nextStep = floatLayoutNextState; break;
+        }
+        const nextLayout = grid.map((col, index) => {
+            ({ x, y, style } = nextStep(x, y, col));
+            return {
+                col,
+                key: index,
+                style,
+            }
+        })
+        setlayout(nextLayout);
+    }, [grid, type]);
     return (
       <LayoutWrapper className={type}>
-        {grid.map((col, index) => {
-            ({ x, y, columnStyle } = nextStep(x, y, col));
+        {layout.map((item, index) => {
             return (
                 <Column
-                    key={index}
-                    style={columnStyle}
+                    key={item.key}
+                    style={item.style}
                     className="column"
                 >
-                    {col}
+                    {childAt(index, item.col)}
                 </Column>
             );
         })}

@@ -1,8 +1,11 @@
 import React from 'react';
-import './App.css';
 
+import './App.css';
 import Layout from './components/Layout';
 import IPhone from './components/IPhone';
+import DummyContent from './components/DummyContent';
+
+
 function App() {
   const [grid, setGrid] = React.useState(["XL", "L", "SM", "SM"]);
   const layouts = [
@@ -24,23 +27,30 @@ function App() {
       }, [])
     setGrid(grid);
   }
+  const components = [
+    <DummyContent />,
+    <DummyContent />,
+    <DummyContent />,
+    <DummyContent />,
+    <DummyContent />
+  ]
   return (
     <div className="App">
       <div>
         <select onChange={(e) => onLayoutChange(e.target.value)}>
           {layouts.map(l => (
-            <option value={l}>{l}</option>
+            <option value={l} key={l}>{l}</option>
           ))}
         </select>
       </div>
       <IPhone>
-        <Layout grid={grid} type='fix'></Layout>
+        <Layout grid={grid} childAt={(index) => components[index]} type='fix'></Layout>
       </IPhone>
       <IPhone>
-        <Layout grid={grid} type='grid'></Layout>
+        <Layout grid={grid} childAt={(index) => components[index]} type='grid'></Layout>
       </IPhone>
       <IPhone>
-        <Layout grid={grid}></Layout>
+        <Layout grid={grid} childAt={(index) => components[index]}></Layout>
       </IPhone>
     </div>
   );
